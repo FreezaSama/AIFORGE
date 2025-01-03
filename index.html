@@ -114,7 +114,18 @@
                 
                 // Upload sketch
                 const sketchFormData = new FormData();
-                const sketchBlob = await fetch(sketchData).then(r => r.blob());
+            function dataURLtoBlob(dataURL) {
+                const [header, base64] = dataURL.split(',');
+                const mimeString = header.match(/:(.*?);/)[1];
+                const byteString = atob(base64);
+                const arrayBuffer = new Uint8Array(byteString.length);
+                for (let i = 0; i < byteString.length; i++) {
+                    arrayBuffer[i] = byteString.charCodeAt(i);
+                }
+                return new Blob([arrayBuffer], { type: mimeString });
+            }
+            
+            const sketchBlob = dataURLtoBlob(sketchData);
                 sketchFormData.append('image', sketchBlob, 'sketch.png');
                 
                 console.log('Uploading sketch to ComfyUI...');
