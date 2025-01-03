@@ -104,8 +104,68 @@
     </div>
 
     <script>
-        // ComfyUI server address - Updated with your address
+        // ComfyUI server address
         const COMFYUI_SERVER = 'http://10.46.129.51:8188';
+
+        // Function to send image to ComfyUI
+        async function sendToComfyUI(sketchData) {
+            try {
+                console.log('Starting image upload...');
+                
+                // Upload sketch
+                const sketchFormData = new FormData();
+                const sketchBlob = await fetch(sketchData).then(r => r.blob());
+                sketchFormData.append('image', sketchBlob, 'sketch.png');
+                
+                console.log('Uploading sketch to ComfyUI...');
+                const sketchUploadResponse = await fetch(`${COMFYUI_SERVER}/upload/image`, {
+                    method: 'POST',
+                    body: sketchFormData
+                });
+
+                if (!sketchUploadResponse.ok) throw new Error('Sketch upload failed');
+                const sketchResult = await sketchUploadResponse.json();
+                console.log('Sketch uploaded successfully:', sketchResult);
+
+                // Create workflow data
+                const workflowData = {
+                    "62": {  // LoadImage node for sketch
+                        "inputs": {
+                            "image": sketchResult.name,
+                            "upload": "image"
+                        }
+                    },
+                    "74": {  // LoadImage node for reference
+                        "inputs": {
+                            "image": "469587929_1384382056304618_3539722473936214664_n.jpg",
+                            "upload": "image"
+                        }
+                    }
+                    // Rest of the workflow remains unchanged
+                };
+
+                console.log('Queueing workflow...');
+                const queueResponse = await fetch(`${COMFYUI_SERVER}/queue`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: workflowData,
+                        client_id: "web-ui"
+                    })
+                });
+
+                if (!queueResponse.ok) throw new Error('Queue failed');
+                console.log('Workflow queued successfully');
+                
+                document.getElementById('outputBox').innerHTML = 'Processing...';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to process image: ' + error.message);
+            }
+        }
 
         // Preview uploaded sketch
         document.getElementById('sketchUpload').addEventListener('change', function(e) {
@@ -117,9 +177,20 @@
                     const placeholder = document.getElementById('sketchPlaceholder');
                     preview.src = e.target.result;
                     preview.style.display = 'block';
-                    placeholder.style.display = 'none';  // Hide placeholder when image is shown
+                    placeholder.style.display = 'none';
                 }
                 reader.readAsDataURL(file);
+            }
+        });
+
+        // Add generate button click handler
+        document.getElementById('generateButton').addEventListener('click', function() {
+            const preview = document.getElementById('sketchPreview');
+            if (preview.src) {
+                console.log('Starting generation process...');
+                sendToComfyUI(preview.src);
+            } else {
+                alert('Please upload a sketch first!');
             }
         });
     </script>
