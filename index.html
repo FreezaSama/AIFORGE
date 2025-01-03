@@ -49,6 +49,11 @@
             object-fit: contain;
         }
 
+        .placeholder-text {
+            color: #ccc;
+            font-size: 16px;
+        }
+
         button {
             width: 300px;
             padding: 10px 20px;
@@ -77,6 +82,7 @@
         <div class="square">
             <div class="image-box" id="sketchBox">
                 <img id="sketchPreview" style="display: none;">
+                <span class="placeholder-text" id="sketchPlaceholder">Sketch goes here</span>
             </div>
             <input type="file" id="sketchUpload" style="display: none;" accept="image/*">
             <button onclick="document.getElementById('sketchUpload').click()">Upload Your Sketch</button>
@@ -105,8 +111,10 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const preview = document.getElementById('sketchPreview');
+                    const placeholder = document.getElementById('sketchPlaceholder');
                     preview.src = e.target.result;
                     preview.style.display = 'block';
+                    placeholder.style.display = 'none';  // Hide placeholder when image is shown
                 }
                 reader.readAsDataURL(file);
             }
